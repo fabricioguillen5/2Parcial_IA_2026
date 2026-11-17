@@ -9,6 +9,7 @@ export const STAGE1_MODEL_URL = '/stage1_resnet_domain.onnx';
 export const STAGE2_MODEL_URL = '/stage2_resnet_4000.onnx';
 const ECG_CLASSES = ['Bradicardia', 'Taquicardia', 'AFib', 'Normal'];
 export type Signals = Record<string, number[]>;
+export const DOCUMENTED_REST = 'Reposo documentado en la toma del ECG';
 export type Predictions = { rest: string; ecg: string; stage2Status: 'waiting' | 'skipped' | 'complete' | 'error' };
 
 const softmax = (logits: number[]): number[] => {
@@ -69,16 +70,19 @@ export const predictWindow = async (
   signal: number[],
   restSession: ort.InferenceSession,
   ecgSession: ort.InferenceSession,
-  runtime: OrtRuntime
+  runtime: OrtRuntime,
+  acquisition: 'documented-rest' | 'unknown' = 'unknown'
 ): Promise<Predictions> => {
-  const input1 = new runtime.Tensor('float32', normalizeWindow(signal, WINDOW_SIZE_STAGE1), [1, 1, WINDOW_SIZE_STAGE1]);
-  const restResults = await restSession.run({ ecg_input: input1 });
-  const restProbs = softmax(readLogits(restResults, 2));
-  // Training class order retained: 0=Resting, 1=Active.
-  const restClass = argmax(restProbs);
-  const rest = `${restClass === 0 ? 'Reposo' : 'Actividad'} (${formatConfidence(restProbs[restClass])})`;
-  if (restClass === 1) {
-    return { rest, ecg: 'Omitida: Stage 1 detectó actividad', stage2Status: 'skipped' };
+  let rest = DOCUMENTED_REST;
+  if (acquisition === 'unknown') {
+    const input1 = new runtime.Tensor('float32', normalizeWindow(signal, WINDOW_SIZE_STAGE1), [1, 1, WINDOW_SIZE_STAGE1]);
+    const restResults = await restSession.run({ ecg_input: input1 });
+    const restProbs = softmax(readLogits(restResults, 2));
+    const restClass = argmax(restProbs);
+    rest = `${restClass === 0 ? 'Reposo' : 'Actividad'} (${formatConfidence(restProbs[restClass])})`;
+    if (restClass === 1) {
+      return { rest, ecg: 'Omitida: Stage 1 detectó actividad', stage2Status: 'skipped' };
+    }
   }
   const input2 = new runtime.Tensor('float32', normalizeWindow(signal, WINDOW_SIZE_STAGE2), [1, 1, WINDOW_SIZE_STAGE2]);
   const ecgResults = await ecgSession.run({ ecg_input: input2 });

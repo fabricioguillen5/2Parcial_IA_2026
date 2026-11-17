@@ -3,7 +3,10 @@
 import { useState, useEffect, useRef } from 'react';
 import type * as ort from 'onnxruntime-web/wasm';
 
-import { WINDOW_SIZE_STAGE1, WINDOW_SIZE_STAGE2, STAGE1_MODEL_URL, STAGE2_MODEL_URL, predictWindow, type OrtRuntime, type Signals, type Predictions } from '../lib/ecg-inference';
+import { WINDOW_SIZE_STAGE1, WINDOW_SIZE_STAGE2, STAGE1_MODEL_URL, STAGE2_MODEL_URL, DOCUMENTED_REST, predictWindow, type OrtRuntime, type Signals, type Predictions } from '../lib/ecg-inference';
+
+// These bundled examples come from ECGs recorded under a resting protocol.
+const restingExamples = new Set(['AFib', 'Taquicardia', 'Bradicardia', 'Normal']);
 
 async function fetchChecked(url: string): Promise<Response> {
   const response = await fetch(url);
@@ -29,7 +32,8 @@ export default function Home() {
   const [selectedSignal, setSelectedSignal] = useState('Normal');
   const [rawSignals, setRawSignals] = useState<Signals | null>(null);
   const [displayWindow, setDisplayWindow] = useState<number[]>([]);
-  const [predictions, setPredictions] = useState<Predictions>({ rest: 'Waiting...', ecg: 'Waiting...', stage2Status: 'waiting' });
+  const [predictions, setPredictions] = useState<Predictions>({ rest: 'Cargando modelos…', ecg: 'Cargando modelos…', stage2Status: 'waiting' });
+  const documentedRest = restingExamples.has(selectedSignal);
   const [status, setStatus] = useState('Loading data & models...');
   const restSessionRef = useRef<ort.InferenceSession | null>(null);
   const ecgSessionRef = useRef<ort.InferenceSession | null>(null);
@@ -114,7 +118,7 @@ export default function Home() {
     let active = true;
     let scrollIndex = 0;
     let lastInferenceTime = -Infinity;
-    setPredictions({ rest: 'Analyzing...', ecg: 'Esperando decisión de Stage 1...', stage2Status: 'waiting' });
+    setPredictions({ rest: 'Analizando actividad…', ecg: documentedRest ? 'Analizando ritmo…' : 'Esperando decisión de Stage 1…', stage2Status: 'waiting' });
     const tick = () => {
       // Circular scrolling is a demo playback; no samples are added to the record.
       const length = Math.min(WINDOW_SIZE_STAGE2, fullSignal.length);
@@ -129,7 +133,7 @@ export default function Home() {
       lastInferenceTime = now;
       inferenceRef.current = (async () => {
         try {
-          const result = await predictWindow(analysisWindow, restSession, ecgSession, runtime);
+          const result = await predictWindow(analysisWindow, restSession, ecgSession, runtime, documentedRest ? 'documented-rest' : 'unknown');
           // Ignore a prediction from a tab that the user has already left.
           if (active) { setPredictions(result); setStatus('Ready'); }
         } catch (error) {
@@ -146,7 +150,7 @@ export default function Home() {
     tick();
     const timer = setInterval(tick, 40);
     return () => { active = false; clearInterval(timer); };
-  }, [rawSignals, selectedSignal]);
+  }, [rawSignals, selectedSignal, documentedRest]);
 
   const handleTabClick = (key: string) => setSelectedSignal(key);
 
@@ -195,9 +199,9 @@ export default function Home() {
 
           <div className="grid grid-cols-2 gap-4 border-t-2 border-gray-200 pt-6">
             <div className="p-4 border rounded bg-blue-50 border-blue-200">
-              <h3 className="text-sm text-blue-600 font-semibold uppercase tracking-wider mb-1">Stage 1: Reposo / actividad</h3>
-              <p className="text-xl font-medium text-blue-900">{predictions.rest}</p>
-              <p className="mt-2 text-sm text-blue-900">El porcentaje corresponde a la clase indicada; no es la precisión del modelo.</p>
+              <h3 className="text-sm text-blue-600 font-semibold uppercase tracking-wider mb-1">{documentedRest ? 'Contexto de adquisición' : 'Stage 1: Reposo / actividad'}</h3>
+              <p className="text-xl font-medium text-blue-900">{documentedRest ? DOCUMENTED_REST : predictions.rest}</p>
+              <p className="mt-2 text-sm text-blue-900">{documentedRest ? 'Stage 2 analiza este ECG directamente.' : 'El porcentaje indica la confianza del modelo en la clase predicha.'}</p>
             </div>
             <div data-stage2-status={predictions.stage2Status} className={`p-4 border rounded ${predictions.stage2Status === 'complete' ? 'bg-green-50 border-green-200' : 'bg-gray-100 border-gray-200'}`}>
               <h3 className="text-sm text-green-600 font-semibold uppercase tracking-wider mb-1">Stage 2: Clasificación ECG</h3>
@@ -210,13 +214,9 @@ export default function Home() {
         <p className="mt-4 text-sm text-gray-600">
           Ambas etapas usan 4000 muestras (8 segundos a 500 Hz). La etapa 2 conserva
           los pesos del modelo original y adapta su entrada de 5000 a 4000 muestras.
-          Su precisión con esta ventana aún no fue validada. Todas las señales
-          pasan primero por Stage 1: reposo permite ejecutar Stage 2 y actividad
-          detiene la cascada. Los botones solo seleccionan la señal de ejemplo;
-          las decisiones provienen de los modelos.
-          {' '}Stage 1 incluye una adaptación aprendida para los registros clínicos
-          y los sensores utilizados en este proyecto. La gráfica reproduce las
-          señales; el análisis usa ventanas continuas del registro original.
+          Su precisión con esta ventana aún no fue validada. Cuando el reposo está
+          documentado, la demostración analiza el ritmo directamente. Para el ejemplo
+          Active, Stage 1 evalúa la actividad y solo pasa a Stage 2 si predice reposo.
         </p>
       </div>
     </main>

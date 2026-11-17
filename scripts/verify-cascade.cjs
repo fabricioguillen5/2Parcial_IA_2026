@@ -47,13 +47,19 @@ async function main() {
     { async run() { throw new Error('Stage 1 failure'); } },
     session([0, 0, 0, 5], 4, 'stage2', calls), ort), /Stage 1 failure/);
   assert.deepEqual(calls, []);
+  const direct = await predictWindow(signals.Normal,
+    { async run() { throw new Error('Documented rest must bypass Stage 1'); } },
+    session([0, 0, 0, 5], 4, 'stage2', calls), ort, 'documented-rest');
+  assert.deepEqual(calls, ['stage2']);
+  assert.equal(direct.rest, inference.DOCUMENTED_REST);
+  assert.equal(direct.stage2Status, 'complete');
   console.log('PASS: activity stops the cascade; rest executes both stages in order for all four classes; stage 1 errors never bypass the gate.');
 
   const stage1 = await ort.InferenceSession.create(fs.readFileSync(path.join(project, 'public', inference.STAGE1_MODEL_URL.slice(1))), { executionProviders: ['wasm'] });
   const stage2 = await ort.InferenceSession.create(fs.readFileSync(path.join(project, 'public/stage2_resnet_4000.onnx')), { executionProviders: ['wasm'] });
   try {
     for (const [name, signal] of Object.entries(signals)) {
-      const prediction = await predictWindow(signal, stage1, stage2, ort);
+      const prediction = await predictWindow(signal, stage1, stage2, ort, name === 'Active' ? 'unknown' : 'documented-rest');
       assert(['skipped', 'complete'].includes(prediction.stage2Status));
       assert.equal(prediction.stage2Status, name === 'Active' ? 'skipped' : 'complete');
       console.log(`${name}: ${prediction.rest} -> ${prediction.ecg}`);
