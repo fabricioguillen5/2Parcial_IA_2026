@@ -10,6 +10,15 @@ El runtime WASM se carga desde jsDelivr con la versión indicada por `ort.env.ve
 
 **Verificación local:** se instaló el componente nativo de Tailwind para Windows que faltaba y se corrigió la carga de ONNX Runtime: ahora se importa dinámicamente dentro de `useEffect`, solo en el navegador, evitando `ERR_INVALID_URL` durante el prerenderizado. TypeScript y `npm run build` finalizaron correctamente, incluidas las cuatro páginas estáticas. Falta comprobar la inferencia en el navegador y completar las señales de etapa 2.
 
+## Despliegue en Vercel
+
+- Importar `fabricioguillen5/2Parcial_IA_2026` desde la cuenta de Vercel. Si no aparece, agregar ese repositorio a la instalación de Vercel en GitHub.
+- El repositorio tiene `package.json` en la raíz: seleccionar el framework Next.js y dejar Root Directory en `./`.
+- Comando de compilación: `npm run build`. Usa Webpack y la integración oficial de Tailwind con PostCSS para evitar el fallo local de procesos de Turbopack.
+- No se requieren claves de API ni variables de entorno: los modelos ONNX se ejecutan en el navegador. El navegador necesita acceso a jsDelivr para cargar el runtime WASM.
+- La segunda etapa sigue requiriendo registros reales de al menos 5000 muestras. Los ejemplos incluidos tienen 4000; la aplicación indica esa limitación sin inventar datos.
+
+
 ## Getting Started
 
 First, run the development server:
