@@ -6,9 +6,15 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 El runtime WASM se carga desde jsDelivr con la versión indicada por `ort.env.versions.web`; no requiere `public/ort/`.
 
-**Etapa 2 con 4000 muestras:** el original `stage2_resnet (1).onnx` se conserva sin cambios. Su arquitectura convolucional termina en `GlobalAveragePool`, `Flatten` y `Gemm`, por lo que admite la ventana más corta al adaptar la forma declarada de entrada. `node scripts/adapt-stage2.cjs` crea la variante cambiando únicamente los dos bytes que declaran la longitud 5000 por 4000; no cambia pesos ni operadores. Se usan las 4000 muestras reales (8 segundos a 500 Hz), sin relleno ni estiramiento. La precisión medida con ventanas de 5000 no puede atribuirse automáticamente a esta variante: falta evaluarla con datos etiquetados a 4000 muestras. El selector de demostración decide qué modelo ejecutar: Active usa únicamente la etapa 1; Normal, Taquicardia, Bradicardia y AFib usan directamente la etapa 2. La predicción no se fuerza a coincidir con el nombre del ejemplo.
+**Etapa 2 con 4000 muestras:** el original `stage2_resnet (1).onnx` se conserva sin cambios. Su arquitectura convolucional termina en `GlobalAveragePool`, `Flatten` y `Gemm`, por lo que admite la ventana más corta al adaptar la forma declarada de entrada. `node scripts/adapt-stage2.cjs` crea la variante cambiando únicamente los dos bytes que declaran la longitud 5000 por 4000; no cambia pesos ni operadores. Se usan las 4000 muestras reales (8 segundos a 500 Hz), sin relleno ni estiramiento. La precisión medida con ventanas de 5000 no puede atribuirse automáticamente a esta variante: falta evaluarla con datos etiquetados a 4000 muestras. Todas las señales pasan por Stage 1. Si predice reposo, se ejecuta Stage 2 con sus cuatro clases; si predice actividad, Stage 2 se omite. Los botones seleccionan únicamente la señal: no deciden qué modelo ejecutar ni fuerzan las predicciones.
 
 **Verificación:** `node scripts/verify-stage2.cjs` ejecuta la variante con las cinco señales reales incluidas y comprueba que devuelve cuatro logits finitos. También comprueba que el original rechaza una entrada de 4000. Esta prueba verifica ejecución, no precisión diagnóstica. ONNX Runtime se importa dinámicamente dentro de `useEffect` para ejecutarse solo en el navegador.
+
+## Cascada y verificación
+
+`lib/ecg-inference.ts` contiene el flujo compartido de inferencia. `node scripts/verify-cascade.cjs` comprueba las dos rutas con sesiones controladas, las cuatro clases de Stage 2, el orden de ejecución y que un error de Stage 1 nunca derive a Stage 2. También ejecuta los dos modelos reales con las cinco señales disponibles.
+
+**Limitación observada:** en la ventana inicial de las cinco señales incluidas, el modelo actual de Stage 1 predice actividad (aproximadamente 88–95 %), incluso para los ejemplos con etiquetas de reposo. La cascada las bloquea conforme a esa salida. Esto requiere revisar el modelo de Stage 1, el orden de clases documentado o la correspondencia del preprocesamiento con su entrenamiento; no se invierten etiquetas ni se ajustan umbrales para forzar resultados. Las pruebas controladas de la ruta de reposo no son evidencia de precisión del modelo real.
 
 ## Despliegue en Vercel
 

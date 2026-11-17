@@ -3,91 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type * as ort from 'onnxruntime-web/wasm';
 
-type OrtRuntime = typeof import('onnxruntime-web/wasm');
-
-const WINDOW_SIZE_STAGE1 = 4000;
-const WINDOW_SIZE_STAGE2 = 4000;
-// The original stage 2 model is preserved; this variant declares 4000 inputs.
-const STAGE1_MODEL_URL = '/stage1_resnet.onnx';
-const STAGE2_MODEL_URL = '/stage2_resnet_4000.onnx';
-const ECG_CLASSES = ['Bradycardia', 'Tachycardia', 'AFib', 'Normal'];
-type Signals = Record<string, number[]>;
-type Predictions = { rest: string; ecg: string };
-
-const softmax = (logits: number[]): number[] => {
-  const max = Math.max(...logits);
-  const exps = logits.map(value => Math.exp(value - max));
-  const sum = exps.reduce((a, b) => a + b, 0);
-  return exps.map(value => value / sum);
-};
-
-const readLogits = (
-  results: Record<string, ort.Tensor>,
-  expectedClasses: number
-): number[] => {
-  const tensor = results.logits;
-  if (!tensor || tensor.type !== 'float32') {
-    throw new Error(`Se esperaba la salida float32 "logits". Salidas: ${Object.keys(results).join(', ')}`);
-  }
-  if (tensor.dims.length !== 2 || tensor.dims[0] !== 1 || tensor.dims[1] !== expectedClasses) {
-    throw new Error(`Forma de salida incorrecta: [${tensor.dims.join(', ')}]; se esperaba [1, ${expectedClasses}].`);
-  }
-  const logits = Array.from(tensor.data as Float32Array);
-  if (logits.length !== expectedClasses || !logits.every(Number.isFinite)) {
-    throw new Error('El modelo devolvió logits no válidos.');
-  }
-  return logits;
-};
-
-// Same per-window population standard deviation and epsilon as make_loader in Colab.
-// Round raw samples to float32 before normalizing, as the training datasets do.
-const normalizeWindow = (signal: number[], length: number): Float32Array => {
-  if (signal.length < length) {
-    throw new Error(`Se necesitan ${length} muestras reales; se recibieron ${signal.length}.`);
-  }
-  const samples = new Float32Array(signal.slice(0, length));
-  if (!samples.every(Number.isFinite)) throw new Error('La señal contiene valores no finitos.');
-  let mean = 0;
-  for (const value of samples) mean += value;
-  mean /= length;
-  let variance = 0;
-  for (const value of samples) variance += (value - mean) ** 2;
-  const denominator = Math.sqrt(variance / length) + 1e-8;
-  return samples.map(value => (value - mean) / denominator);
-};
-
-const argmax = (values: number[]): number => {
-  let best = 0;
-  for (let i = 1; i < values.length; i++) {
-    if (values[i] > values[best]) best = i;
-  }
-  return best;
-};
-
-const predictWindow = async (
-  signal: number[],
-  selectedSignal: string,
-  restSession: ort.InferenceSession,
-  ecgSession: ort.InferenceSession,
-  runtime: OrtRuntime
-): Promise<Predictions> => {
-  // Demo routing follows the selected example, not a prediction from stage 1.
-  if (selectedSignal === 'Active') {
-    const input1 = new runtime.Tensor('float32', normalizeWindow(signal, WINDOW_SIZE_STAGE1), [1, 1, WINDOW_SIZE_STAGE1]);
-    const restResults = await restSession.run({ ecg_input: input1 });
-    const restProbs = softmax(readLogits(restResults, 2));
-    // Colab class order: 0=Resting, 1=Active. Preserve the actual model result.
-    const restClass = argmax(restProbs);
-    const rest = `${restClass === 0 ? 'Resting' : 'Active'} (${(restProbs[restClass] * 100).toFixed(1)}%)`;
-    return { rest, ecg: 'No aplica: ejemplo Active' };
-  }
-  const input2 = new runtime.Tensor('float32', normalizeWindow(signal, WINDOW_SIZE_STAGE2), [1, 1, WINDOW_SIZE_STAGE2]);
-  const ecgResults = await ecgSession.run({ ecg_input: input2 });
-  const ecgProbs = softmax(readLogits(ecgResults, 4));
-  const ecgClass = argmax(ecgProbs);
-  // No manual AFib override: this is the same argmax rule evaluated in Colab.
-  return { rest: 'No aplica: seleccionar Active', ecg: `${ECG_CLASSES[ecgClass]} (${(ecgProbs[ecgClass] * 100).toFixed(1)}%)` };
-};
+import { WINDOW_SIZE_STAGE1, WINDOW_SIZE_STAGE2, STAGE1_MODEL_URL, STAGE2_MODEL_URL, predictWindow, type OrtRuntime, type Signals, type Predictions } from '../lib/ecg-inference';
 
 async function fetchChecked(url: string): Promise<Response> {
   const response = await fetch(url);
@@ -113,7 +29,7 @@ export default function Home() {
   const [selectedSignal, setSelectedSignal] = useState('Normal');
   const [rawSignals, setRawSignals] = useState<Signals | null>(null);
   const [displayWindow, setDisplayWindow] = useState<number[]>([]);
-  const [predictions, setPredictions] = useState<Predictions>({ rest: 'Waiting...', ecg: 'Waiting...' });
+  const [predictions, setPredictions] = useState<Predictions>({ rest: 'Waiting...', ecg: 'Waiting...', stage2Status: 'waiting' });
   const [status, setStatus] = useState('Loading data & models...');
   const restSessionRef = useRef<ort.InferenceSession | null>(null);
   const ecgSessionRef = useRef<ort.InferenceSession | null>(null);
@@ -198,9 +114,7 @@ export default function Home() {
     let active = true;
     let scrollIndex = 0;
     let lastInferenceTime = -Infinity;
-    setPredictions(selectedSignal === 'Active'
-      ? { rest: 'Analyzing...', ecg: 'No aplica: ejemplo Active' }
-      : { rest: 'No aplica: seleccionar Active', ecg: 'Analyzing...' });
+    setPredictions({ rest: 'Analyzing...', ecg: 'Esperando decisión de Stage 1...', stage2Status: 'waiting' });
     const tick = () => {
       // Circular scrolling is a demo playback; no samples are added to the record.
       const length = Math.min(WINDOW_SIZE_STAGE2, fullSignal.length);
@@ -212,14 +126,14 @@ export default function Home() {
       lastInferenceTime = now;
       inferenceRef.current = (async () => {
         try {
-          const result = await predictWindow(windowData, selectedSignal, restSession, ecgSession, runtime);
+          const result = await predictWindow(windowData, restSession, ecgSession, runtime);
           // Ignore a prediction from a tab that the user has already left.
           if (active) { setPredictions(result); setStatus('Ready'); }
         } catch (error) {
           if (active) {
             console.error('Inference error:', error);
             setStatus(`Error: ${error instanceof Error ? error.message : String(error)}`);
-            setPredictions({ rest: 'Error de inferencia', ecg: 'Revisar señal y modelos' });
+            setPredictions({ rest: 'Error de inferencia', ecg: 'Revisar señal y modelos', stage2Status: 'error' });
           }
         } finally {
           inferenceRef.current = null;
@@ -249,7 +163,7 @@ export default function Home() {
     <main className="min-h-screen bg-gray-50 flex flex-col items-center p-8 font-sans">
       <div className="w-full max-w-5xl">
         <div className="flex justify-between items-end mb-6">
-          <h1 className="text-3xl font-light text-gray-700 tracking-wide">ECG Classifier Demo</h1>
+          <h1 className="text-3xl font-light text-gray-700 tracking-wide">ECG Classifier · Cascada</h1>
           <span className={`text-sm px-3 py-1 rounded-full ${status === 'Ready' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
             {status}
           </span>
@@ -277,13 +191,13 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-2 gap-4 border-t-2 border-gray-200 pt-6">
-            <div className={`p-4 border rounded ${selectedSignal === 'Active' ? 'bg-blue-50 border-blue-200' : 'bg-gray-100 border-gray-200'}`}>
+            <div className="p-4 border rounded bg-blue-50 border-blue-200">
               <h3 className="text-sm text-blue-600 font-semibold uppercase tracking-wider mb-1">Stage 1: Activity (ResNet)</h3>
               <p className="text-xl font-medium text-blue-900">{predictions.rest}</p>
             </div>
-            <div className={`p-4 border rounded ${selectedSignal !== 'Active' ? 'bg-green-50 border-green-200' : 'bg-gray-100 border-gray-200'}`}>
+            <div data-stage2-status={predictions.stage2Status} className={`p-4 border rounded ${predictions.stage2Status === 'complete' ? 'bg-green-50 border-green-200' : 'bg-gray-100 border-gray-200'}`}>
               <h3 className="text-sm text-green-600 font-semibold uppercase tracking-wider mb-1">Stage 2: Arrhythmia (ResNet)</h3>
-              <p className={`text-xl font-medium ${selectedSignal === 'Active' ? 'text-gray-500 italic' : 'text-green-900'}`}>
+              <p className={`text-xl font-medium ${predictions.stage2Status === 'complete' ? 'text-green-900' : 'text-gray-500 italic'}`}>
                 {predictions.ecg}
               </p>
             </div>
@@ -292,10 +206,10 @@ export default function Home() {
         <p className="mt-4 text-sm text-gray-600">
           Ambas etapas usan 4000 muestras (8 segundos a 500 Hz). La etapa 2 conserva
           los pesos del modelo original y adapta su entrada de 5000 a 4000 muestras.
-          Su precisión con esta ventana aún no fue validada. En esta demostración,
-          Active ejecuta solo Stage 1; Normal, Taquicardia, Bradicardia y AFib
-          ejecutan directamente Stage 2. La opción elegida selecciona el modelo;
-          el resultado mostrado es su predicción.
+          Su precisión con esta ventana aún no fue validada. Todas las señales
+          pasan primero por Stage 1: reposo permite ejecutar Stage 2 y actividad
+          detiene la cascada. Los botones solo seleccionan la señal de ejemplo;
+          las decisiones provienen de los modelos.
         </p>
       </div>
     </main>
