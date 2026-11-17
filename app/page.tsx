@@ -66,26 +66,27 @@ const argmax = (values: number[]): number => {
 
 const predictWindow = async (
   signal: number[],
+  selectedSignal: string,
   restSession: ort.InferenceSession,
   ecgSession: ort.InferenceSession,
   runtime: OrtRuntime
 ): Promise<Predictions> => {
-  const input1 = new runtime.Tensor('float32', normalizeWindow(signal, WINDOW_SIZE_STAGE1), [1, 1, WINDOW_SIZE_STAGE1]);
-  const restResults = await restSession.run({ ecg_input: input1 });
-  const restProbs = softmax(readLogits(restResults, 2));
-  // Colab class order: 0=Resting, 1=Active. Argmax matches evaluation (including ties).
-  const restClass = argmax(restProbs);
-  const rest = `${restClass === 0 ? 'Resting' : 'Active'} (${(restProbs[restClass] * 100).toFixed(1)}%)`;
-  if (restClass === 1) return { rest, ecg: 'Skipped (Patient Active)' };
-  if (signal.length < WINDOW_SIZE_STAGE2) {
-    return { rest, ecg: `Se requieren ${WINDOW_SIZE_STAGE2} muestras reales; señal disponible: ${signal.length}.` };
+  // Demo routing follows the selected example, not a prediction from stage 1.
+  if (selectedSignal === 'Active') {
+    const input1 = new runtime.Tensor('float32', normalizeWindow(signal, WINDOW_SIZE_STAGE1), [1, 1, WINDOW_SIZE_STAGE1]);
+    const restResults = await restSession.run({ ecg_input: input1 });
+    const restProbs = softmax(readLogits(restResults, 2));
+    // Colab class order: 0=Resting, 1=Active. Preserve the actual model result.
+    const restClass = argmax(restProbs);
+    const rest = `${restClass === 0 ? 'Resting' : 'Active'} (${(restProbs[restClass] * 100).toFixed(1)}%)`;
+    return { rest, ecg: 'No aplica: ejemplo Active' };
   }
   const input2 = new runtime.Tensor('float32', normalizeWindow(signal, WINDOW_SIZE_STAGE2), [1, 1, WINDOW_SIZE_STAGE2]);
   const ecgResults = await ecgSession.run({ ecg_input: input2 });
   const ecgProbs = softmax(readLogits(ecgResults, 4));
   const ecgClass = argmax(ecgProbs);
   // No manual AFib override: this is the same argmax rule evaluated in Colab.
-  return { rest, ecg: `${ECG_CLASSES[ecgClass]} (${(ecgProbs[ecgClass] * 100).toFixed(1)}%)` };
+  return { rest: 'No aplica: seleccionar Active', ecg: `${ECG_CLASSES[ecgClass]} (${(ecgProbs[ecgClass] * 100).toFixed(1)}%)` };
 };
 
 async function fetchChecked(url: string): Promise<Response> {
@@ -197,7 +198,9 @@ export default function Home() {
     let active = true;
     let scrollIndex = 0;
     let lastInferenceTime = -Infinity;
-    setPredictions({ rest: 'Analyzing...', ecg: 'Analyzing...' });
+    setPredictions(selectedSignal === 'Active'
+      ? { rest: 'Analyzing...', ecg: 'No aplica: ejemplo Active' }
+      : { rest: 'No aplica: seleccionar Active', ecg: 'Analyzing...' });
     const tick = () => {
       // Circular scrolling is a demo playback; no samples are added to the record.
       const length = Math.min(WINDOW_SIZE_STAGE2, fullSignal.length);
@@ -209,7 +212,7 @@ export default function Home() {
       lastInferenceTime = now;
       inferenceRef.current = (async () => {
         try {
-          const result = await predictWindow(windowData, restSession, ecgSession, runtime);
+          const result = await predictWindow(windowData, selectedSignal, restSession, ecgSession, runtime);
           // Ignore a prediction from a tab that the user has already left.
           if (active) { setPredictions(result); setStatus('Ready'); }
         } catch (error) {
@@ -265,7 +268,7 @@ export default function Home() {
 
           <div className="flex gap-4 mb-8">
             {['AFib', 'Taquicardia', 'Bradicardia', 'Normal', 'Active'].map((key) => (
-              <button key={key} disabled={!rawSignals} onClick={() => handleTabClick(key)}
+              <button key={key} aria-pressed={selectedSignal === key} disabled={!rawSignals} onClick={() => handleTabClick(key)}
                 className={`flex-1 py-2 px-4 border-2 rounded-sm text-lg font-light transition-colors
                   ${selectedSignal === key ? 'border-gray-600 bg-gray-200 text-gray-900' : 'border-gray-400 text-gray-600 hover:bg-gray-100'}`}>
                 {key}
@@ -274,13 +277,13 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-2 gap-4 border-t-2 border-gray-200 pt-6">
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded">
-              <h3 className="text-sm text-blue-600 font-semibold uppercase tracking-wider mb-1">Stage 1: Rest Gatekeeper (ResNet)</h3>
+            <div className={`p-4 border rounded ${selectedSignal === 'Active' ? 'bg-blue-50 border-blue-200' : 'bg-gray-100 border-gray-200'}`}>
+              <h3 className="text-sm text-blue-600 font-semibold uppercase tracking-wider mb-1">Stage 1: Activity (ResNet)</h3>
               <p className="text-xl font-medium text-blue-900">{predictions.rest}</p>
             </div>
-            <div className="p-4 bg-green-50 border border-green-200 rounded">
+            <div className={`p-4 border rounded ${selectedSignal !== 'Active' ? 'bg-green-50 border-green-200' : 'bg-gray-100 border-gray-200'}`}>
               <h3 className="text-sm text-green-600 font-semibold uppercase tracking-wider mb-1">Stage 2: Arrhythmia (ResNet)</h3>
-              <p className={`text-xl font-medium ${predictions.ecg.includes('Skipped') ? 'text-gray-500 italic' : 'text-green-900'}`}>
+              <p className={`text-xl font-medium ${selectedSignal === 'Active' ? 'text-gray-500 italic' : 'text-green-900'}`}>
                 {predictions.ecg}
               </p>
             </div>
@@ -289,8 +292,10 @@ export default function Home() {
         <p className="mt-4 text-sm text-gray-600">
           Ambas etapas usan 4000 muestras (8 segundos a 500 Hz). La etapa 2 conserva
           los pesos del modelo original y adapta su entrada de 5000 a 4000 muestras.
-          Su precisión con esta ventana aún no fue validada. Se ejecuta cuando la
-          primera etapa detecta reposo.
+          Su precisión con esta ventana aún no fue validada. En esta demostración,
+          Active ejecuta solo Stage 1; Normal, Taquicardia, Bradicardia y AFib
+          ejecutan directamente Stage 2. La opción elegida selecciona el modelo;
+          el resultado mostrado es su predicción.
         </p>
       </div>
     </main>
