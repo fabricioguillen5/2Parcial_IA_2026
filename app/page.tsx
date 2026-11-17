@@ -195,11 +195,12 @@ export default function Home() {
 
           <div className="grid grid-cols-2 gap-4 border-t-2 border-gray-200 pt-6">
             <div className="p-4 border rounded bg-blue-50 border-blue-200">
-              <h3 className="text-sm text-blue-600 font-semibold uppercase tracking-wider mb-1">Stage 1: Activity (ResNet)</h3>
+              <h3 className="text-sm text-blue-600 font-semibold uppercase tracking-wider mb-1">Stage 1: Reposo / actividad</h3>
               <p className="text-xl font-medium text-blue-900">{predictions.rest}</p>
+              <p className="mt-2 text-sm text-blue-900">El porcentaje corresponde a la clase indicada; no es la precisión del modelo.</p>
             </div>
             <div data-stage2-status={predictions.stage2Status} className={`p-4 border rounded ${predictions.stage2Status === 'complete' ? 'bg-green-50 border-green-200' : 'bg-gray-100 border-gray-200'}`}>
-              <h3 className="text-sm text-green-600 font-semibold uppercase tracking-wider mb-1">Stage 2: Arrhythmia (ResNet)</h3>
+              <h3 className="text-sm text-green-600 font-semibold uppercase tracking-wider mb-1">Stage 2: Clasificación ECG</h3>
               <p className={`text-xl font-medium ${predictions.stage2Status === 'complete' ? 'text-green-900' : 'text-gray-500 italic'}`}>
                 {predictions.ecg}
               </p>

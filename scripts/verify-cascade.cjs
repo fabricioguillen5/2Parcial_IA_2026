@@ -31,7 +31,7 @@ async function main() {
     { run() { throw new Error('Stage 2 must not run after activity.'); } }, ort);
   assert.deepEqual(calls, ['stage1']);
   assert.equal(result.stage2Status, 'skipped');
-  assert.match(result.rest, /^Active/);
+  assert.match(result.rest, /^Actividad/);
 
   for (let i = 0; i < 4; i++) {
     calls = [];
@@ -40,7 +40,7 @@ async function main() {
       session([5, 0], 2, 'stage1', calls), session(logits, 4, 'stage2', calls), ort);
     assert.deepEqual(calls, ['stage1', 'stage2']);
     assert.equal(result.stage2Status, 'complete');
-    assert(result.ecg.startsWith(['Bradycardia', 'Tachycardia', 'AFib', 'Normal'][i]));
+    assert(result.ecg.startsWith(['Bradicardia', 'Taquicardia', 'AFib', 'Normal'][i]));
   }
   calls = [];
   await assert.rejects(predictWindow(signals.Normal,

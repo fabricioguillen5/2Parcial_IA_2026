@@ -7,7 +7,7 @@ export const WINDOW_SIZE_STAGE2 = 4000;
 // The original stage 2 model is preserved; this variant declares 4000 inputs.
 export const STAGE1_MODEL_URL = '/stage1_resnet_domain.onnx';
 export const STAGE2_MODEL_URL = '/stage2_resnet_4000.onnx';
-const ECG_CLASSES = ['Bradycardia', 'Tachycardia', 'AFib', 'Normal'];
+const ECG_CLASSES = ['Bradicardia', 'Taquicardia', 'AFib', 'Normal'];
 export type Signals = Record<string, number[]>;
 export type Predictions = { rest: string; ecg: string; stage2Status: 'waiting' | 'skipped' | 'complete' | 'error' };
 
@@ -61,6 +61,10 @@ const argmax = (values: number[]): number => {
   return best;
 };
 
+const formatConfidence = (probability: number): string => probability >= 0.999
+  ? '>99,9 %'
+  : `${(probability * 100).toFixed(1).replace('.', ',')} %`;
+
 export const predictWindow = async (
   signal: number[],
   restSession: ort.InferenceSession,
@@ -72,7 +76,7 @@ export const predictWindow = async (
   const restProbs = softmax(readLogits(restResults, 2));
   // Training class order retained: 0=Resting, 1=Active.
   const restClass = argmax(restProbs);
-  const rest = `${restClass === 0 ? 'Resting' : 'Active'} (${(restProbs[restClass] * 100).toFixed(1)}%)`;
+  const rest = `${restClass === 0 ? 'Reposo' : 'Actividad'} (${formatConfidence(restProbs[restClass])})`;
   if (restClass === 1) {
     return { rest, ecg: 'Omitida: Stage 1 detectó actividad', stage2Status: 'skipped' };
   }
@@ -82,7 +86,7 @@ export const predictWindow = async (
   const ecgClass = argmax(ecgProbs);
   return {
     rest,
-    ecg: `${ECG_CLASSES[ecgClass]} (${(ecgProbs[ecgClass] * 100).toFixed(1)}%)`,
+    ecg: `${ECG_CLASSES[ecgClass]} (${formatConfidence(ecgProbs[ecgClass])})`,
     stage2Status: 'complete'
   };
 };
