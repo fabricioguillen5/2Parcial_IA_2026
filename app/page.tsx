@@ -120,12 +120,9 @@ export default function Home() {
     let lastInferenceTime = -Infinity;
     setPredictions({ rest: 'Analizando actividad…', ecg: documentedRest ? 'Analizando ritmo…' : 'Esperando decisión de Stage 1…', stage2Status: 'waiting' });
     const tick = () => {
-      // Circular scrolling is a demo playback; no samples are added to the record.
+      // Score the same 4000-sample window shown in the repeating demo playback.
       const length = Math.min(WINDOW_SIZE_STAGE2, fullSignal.length);
       const windowData = Array.from({ length }, (_, i) => fullSignal[(scrollIndex + i) % fullSignal.length]);
-      // Inference uses contiguous recorded samples; wrapping is only for playback.
-      const analysisStart = Math.min(scrollIndex, fullSignal.length - length);
-      const analysisWindow = fullSignal.slice(analysisStart, analysisStart + length);
       setDisplayWindow(windowData);
       scrollIndex = (scrollIndex + 20) % fullSignal.length;
       const now = Date.now();
@@ -133,7 +130,7 @@ export default function Home() {
       lastInferenceTime = now;
       inferenceRef.current = (async () => {
         try {
-          const result = await predictWindow(analysisWindow, restSession, ecgSession, runtime, documentedRest ? 'documented-rest' : 'unknown');
+          const result = await predictWindow(windowData, restSession, ecgSession, runtime, documentedRest ? 'documented-rest' : 'unknown');
           // Ignore a prediction from a tab that the user has already left.
           if (active) { setPredictions(result); setStatus('Ready'); }
         } catch (error) {
@@ -199,9 +196,9 @@ export default function Home() {
 
           <div className="grid grid-cols-2 gap-4 border-t-2 border-gray-200 pt-6">
             <div className="p-4 border rounded bg-blue-50 border-blue-200">
-              <h3 className="text-sm text-blue-600 font-semibold uppercase tracking-wider mb-1">{documentedRest ? 'Contexto de adquisición' : 'Stage 1: Reposo / actividad'}</h3>
-              <p className="text-xl font-medium text-blue-900">{documentedRest ? DOCUMENTED_REST : predictions.rest}</p>
-              <p className="mt-2 text-sm text-blue-900">{documentedRest ? 'Stage 2 analiza este ECG directamente.' : 'El porcentaje indica la confianza del modelo en la clase predicha.'}</p>
+              <h3 className="text-sm text-blue-600 font-semibold uppercase tracking-wider mb-1">Stage 1: Reposo / actividad</h3>
+              <p className="text-xl font-medium text-blue-900">{predictions.rest}</p>
+              {documentedRest && <p className="mt-2 text-sm text-blue-900">{DOCUMENTED_REST}. La estimación de Stage 1 se muestra como referencia.</p>}
             </div>
             <div data-stage2-status={predictions.stage2Status} className={`p-4 border rounded ${predictions.stage2Status === 'complete' ? 'bg-green-50 border-green-200' : 'bg-gray-100 border-gray-200'}`}>
               <h3 className="text-sm text-green-600 font-semibold uppercase tracking-wider mb-1">Stage 2: Clasificación ECG</h3>
@@ -212,11 +209,12 @@ export default function Home() {
           </div>
         </div>
         <p className="mt-4 text-sm text-gray-600">
-          Ambas etapas usan 4000 muestras (8 segundos a 500 Hz). La etapa 2 conserva
-          los pesos del modelo original y adapta su entrada de 5000 a 4000 muestras.
-          Su precisión con esta ventana aún no fue validada. Cuando el reposo está
-          documentado, la demostración analiza el ritmo directamente. Para el ejemplo
-          Active, Stage 1 evalúa la actividad y solo pasa a Stage 2 si predice reposo.
+          Los porcentajes muestran la confianza estimada por cada modelo y se recalculan
+          aproximadamente cada 2 segundos. La demostración repite las 4000 muestras en bucle,
+          por lo que el salto entre el fin y el inicio puede influir en los resultados.
+          Stage 2 analiza los ECG con reposo documentado. Para el ejemplo Active,
+          se omite si Stage 1 detecta actividad. La precisión de Stage 2 con ventanas
+          de 4000 muestras sigue pendiente de validación.
         </p>
       </div>
     </main>

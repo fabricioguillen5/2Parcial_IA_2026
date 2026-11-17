@@ -62,9 +62,9 @@ const argmax = (values: number[]): number => {
   return best;
 };
 
-const formatConfidence = (probability: number): string => probability >= 0.999
-  ? '>99,9 %'
-  : `${(probability * 100).toFixed(1).replace('.', ',')} %`;
+const formatConfidence = (probability: number): string => probability >= 0.9999995
+  ? '>99,9999 %'
+  : `${(probability * 100).toFixed(probability >= 0.99 ? 4 : 1).replace('.', ',')} %`;
 
 export const predictWindow = async (
   signal: number[],
@@ -73,16 +73,20 @@ export const predictWindow = async (
   runtime: OrtRuntime,
   acquisition: 'documented-rest' | 'unknown' = 'unknown'
 ): Promise<Predictions> => {
-  let rest = DOCUMENTED_REST;
-  if (acquisition === 'unknown') {
+  let rest: string;
+  try {
     const input1 = new runtime.Tensor('float32', normalizeWindow(signal, WINDOW_SIZE_STAGE1), [1, 1, WINDOW_SIZE_STAGE1]);
     const restResults = await restSession.run({ ecg_input: input1 });
     const restProbs = softmax(readLogits(restResults, 2));
     const restClass = argmax(restProbs);
     rest = `${restClass === 0 ? 'Reposo' : 'Actividad'} (${formatConfidence(restProbs[restClass])})`;
-    if (restClass === 1) {
+    if (restClass === 1 && acquisition === 'unknown') {
       return { rest, ecg: 'Omitida: Stage 1 detectó actividad', stage2Status: 'skipped' };
     }
+  } catch (error) {
+    if (acquisition === 'unknown') throw error;
+    console.error('Error en Stage 1:', error);
+    rest = 'Estimación no disponible';
   }
   const input2 = new runtime.Tensor('float32', normalizeWindow(signal, WINDOW_SIZE_STAGE2), [1, 1, WINDOW_SIZE_STAGE2]);
   const ecgResults = await ecgSession.run({ ecg_input: input2 });
