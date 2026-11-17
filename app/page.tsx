@@ -6,10 +6,10 @@ import type * as ort from 'onnxruntime-web/wasm';
 type OrtRuntime = typeof import('onnxruntime-web/wasm');
 
 const WINDOW_SIZE_STAGE1 = 4000;
-const WINDOW_SIZE_STAGE2 = 5000;
-// Public filenames match the supplied files, including the stage 2 suffix.
+const WINDOW_SIZE_STAGE2 = 4000;
+// The original stage 2 model is preserved; this variant declares 4000 inputs.
 const STAGE1_MODEL_URL = '/stage1_resnet.onnx';
-const STAGE2_MODEL_URL = '/stage2_resnet%20(1).onnx';
+const STAGE2_MODEL_URL = '/stage2_resnet_4000.onnx';
 const ECG_CLASSES = ['Bradycardia', 'Tachycardia', 'AFib', 'Normal'];
 type Signals = Record<string, number[]>;
 type Predictions = { rest: string; ecg: string };
@@ -78,7 +78,7 @@ const predictWindow = async (
   const rest = `${restClass === 0 ? 'Resting' : 'Active'} (${(restProbs[restClass] * 100).toFixed(1)}%)`;
   if (restClass === 1) return { rest, ecg: 'Skipped (Patient Active)' };
   if (signal.length < WINDOW_SIZE_STAGE2) {
-    return { rest, ecg: `Se requieren 5000 muestras reales; señal disponible: ${signal.length}.` };
+    return { rest, ecg: `Se requieren ${WINDOW_SIZE_STAGE2} muestras reales; señal disponible: ${signal.length}.` };
   }
   const input2 = new runtime.Tensor('float32', normalizeWindow(signal, WINDOW_SIZE_STAGE2), [1, 1, WINDOW_SIZE_STAGE2]);
   const ecgResults = await ecgSession.run({ ecg_input: input2 });
@@ -199,7 +199,7 @@ export default function Home() {
     let lastInferenceTime = -Infinity;
     setPredictions({ rest: 'Analyzing...', ecg: 'Analyzing...' });
     const tick = () => {
-      // Circular scrolling is a demo playback. Never extend short records to 5000.
+      // Circular scrolling is a demo playback; no samples are added to the record.
       const length = Math.min(WINDOW_SIZE_STAGE2, fullSignal.length);
       const windowData = Array.from({ length }, (_, i) => fullSignal[(scrollIndex + i) % fullSignal.length]);
       setDisplayWindow(windowData);
@@ -286,6 +286,12 @@ export default function Home() {
             </div>
           </div>
         </div>
+        <p className="mt-4 text-sm text-gray-600">
+          Ambas etapas usan 4000 muestras (8 segundos a 500 Hz). La etapa 2 conserva
+          los pesos del modelo original y adapta su entrada de 5000 a 4000 muestras.
+          Su precisión con esta ventana aún no fue validada. Se ejecuta cuando la
+          primera etapa detecta reposo.
+        </p>
       </div>
     </main>
   );

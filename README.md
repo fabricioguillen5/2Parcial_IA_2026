@@ -2,13 +2,13 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Integración de los modelos seleccionados
 
-`app/page.tsx` usa `public/stage1_resnet.onnx` (entrada `[1,1,4000]`) y `public/stage2_resnet (1).onnx` (entrada `[1,1,5000]`). Ambos modelos reciben señales normalizadas por ventana y devuelven logits; se aplica softmax y argmax como en Colab. Los archivos anteriores de Random Forest no se utilizan.
+`app/page.tsx` usa `public/stage1_resnet.onnx` y `public/stage2_resnet_4000.onnx`, ambos con entrada `[1,1,4000]`. Reciben señales normalizadas por ventana y devuelven logits; se aplica softmax y argmax. Los archivos anteriores de Random Forest no se utilizan.
 
 El runtime WASM se carga desde jsDelivr con la versión indicada por `ort.env.versions.web`; no requiere `public/ort/`.
 
-**Pendiente de datos:** las cinco señales de `public/signals.json` tienen 4000 muestras. Para ejecutar la etapa 2 se deben regenerar las señales Chapman con al menos 5000 muestras reales a 500 Hz. La página muestra un aviso y no fabrica las muestras faltantes.
+**Etapa 2 con 4000 muestras:** el original `stage2_resnet (1).onnx` se conserva sin cambios. Su arquitectura convolucional termina en `GlobalAveragePool`, `Flatten` y `Gemm`, por lo que admite la ventana más corta al adaptar la forma declarada de entrada. `node scripts/adapt-stage2.cjs` crea la variante cambiando únicamente los dos bytes que declaran la longitud 5000 por 4000; no cambia pesos ni operadores. Se usan las 4000 muestras reales (8 segundos a 500 Hz), sin relleno ni estiramiento. La precisión medida con ventanas de 5000 no puede atribuirse automáticamente a esta variante: falta evaluarla con datos etiquetados a 4000 muestras. La etapa 2 se sigue ejecutando solo si la primera detecta reposo.
 
-**Verificación local:** se instaló el componente nativo de Tailwind para Windows que faltaba y se corrigió la carga de ONNX Runtime: ahora se importa dinámicamente dentro de `useEffect`, solo en el navegador, evitando `ERR_INVALID_URL` durante el prerenderizado. TypeScript y `npm run build` finalizaron correctamente, incluidas las cuatro páginas estáticas. Falta comprobar la inferencia en el navegador y completar las señales de etapa 2.
+**Verificación:** `node scripts/verify-stage2.cjs` ejecuta la variante con las cinco señales reales incluidas y comprueba que devuelve cuatro logits finitos. También comprueba que el original rechaza una entrada de 4000. Esta prueba verifica ejecución, no precisión diagnóstica. ONNX Runtime se importa dinámicamente dentro de `useEffect` para ejecutarse solo en el navegador.
 
 ## Despliegue en Vercel
 
@@ -16,7 +16,7 @@ El runtime WASM se carga desde jsDelivr con la versión indicada por `ort.env.ve
 - El repositorio tiene `package.json` en la raíz: seleccionar el framework Next.js y dejar Root Directory en `./`.
 - Comando de compilación: `npm run build`. Usa Webpack y la integración oficial de Tailwind con PostCSS para evitar el fallo local de procesos de Turbopack.
 - No se requieren claves de API ni variables de entorno: los modelos ONNX se ejecutan en el navegador. El navegador necesita acceso a jsDelivr para cargar el runtime WASM.
-- La segunda etapa sigue requiriendo registros reales de al menos 5000 muestras. Los ejemplos incluidos tienen 4000; la aplicación indica esa limitación sin inventar datos.
+- Ambas etapas aceptan los ejemplos incluidos de 4000 muestras. La página identifica la adaptación y su validación de precisión pendiente.
 
 
 ## Getting Started
