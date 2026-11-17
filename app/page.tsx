@@ -119,6 +119,9 @@ export default function Home() {
       // Circular scrolling is a demo playback; no samples are added to the record.
       const length = Math.min(WINDOW_SIZE_STAGE2, fullSignal.length);
       const windowData = Array.from({ length }, (_, i) => fullSignal[(scrollIndex + i) % fullSignal.length]);
+      // Inference uses contiguous recorded samples; wrapping is only for playback.
+      const analysisStart = Math.min(scrollIndex, fullSignal.length - length);
+      const analysisWindow = fullSignal.slice(analysisStart, analysisStart + length);
       setDisplayWindow(windowData);
       scrollIndex = (scrollIndex + 20) % fullSignal.length;
       const now = Date.now();
@@ -126,7 +129,7 @@ export default function Home() {
       lastInferenceTime = now;
       inferenceRef.current = (async () => {
         try {
-          const result = await predictWindow(windowData, restSession, ecgSession, runtime);
+          const result = await predictWindow(analysisWindow, restSession, ecgSession, runtime);
           // Ignore a prediction from a tab that the user has already left.
           if (active) { setPredictions(result); setStatus('Ready'); }
         } catch (error) {
@@ -210,6 +213,9 @@ export default function Home() {
           pasan primero por Stage 1: reposo permite ejecutar Stage 2 y actividad
           detiene la cascada. Los botones solo seleccionan la señal de ejemplo;
           las decisiones provienen de los modelos.
+          {' '}Stage 1 incluye una adaptación aprendida para los registros clínicos
+          y los sensores utilizados en este proyecto. La gráfica reproduce las
+          señales; el análisis usa ventanas continuas del registro original.
         </p>
       </div>
     </main>

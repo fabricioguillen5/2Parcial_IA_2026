@@ -5,7 +5,7 @@ export type OrtRuntime = typeof import('onnxruntime-web/wasm');
 export const WINDOW_SIZE_STAGE1 = 4000;
 export const WINDOW_SIZE_STAGE2 = 4000;
 // The original stage 2 model is preserved; this variant declares 4000 inputs.
-export const STAGE1_MODEL_URL = '/stage1_resnet.onnx';
+export const STAGE1_MODEL_URL = '/stage1_resnet_domain.onnx';
 export const STAGE2_MODEL_URL = '/stage2_resnet_4000.onnx';
 const ECG_CLASSES = ['Bradycardia', 'Tachycardia', 'AFib', 'Normal'];
 export type Signals = Record<string, number[]>;

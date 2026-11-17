@@ -2,7 +2,7 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Integración de los modelos seleccionados
 
-`app/page.tsx` usa `public/stage1_resnet.onnx` y `public/stage2_resnet_4000.onnx`, ambos con entrada `[1,1,4000]`. Reciben señales normalizadas por ventana y devuelven logits; se aplica softmax y argmax. Los archivos anteriores de Random Forest no se utilizan.
+`app/page.tsx` usa `public/stage1_resnet_domain.onnx` y `public/stage2_resnet_4000.onnx`, ambos con entrada `[1,1,4000]`. Reciben señales normalizadas por ventana y devuelven logits; se aplica softmax y argmax. Los archivos anteriores de Random Forest no se utilizan.
 
 El runtime WASM se carga desde jsDelivr con la versión indicada por `ort.env.versions.web`; no requiere `public/ort/`.
 
@@ -14,7 +14,7 @@ El runtime WASM se carga desde jsDelivr con la versión indicada por `ort.env.ve
 
 `lib/ecg-inference.ts` contiene el flujo compartido de inferencia. `node scripts/verify-cascade.cjs` comprueba las dos rutas con sesiones controladas, las cuatro clases de Stage 2, el orden de ejecución y que un error de Stage 1 nunca derive a Stage 2. También ejecuta los dos modelos reales con las cinco señales disponibles.
 
-**Limitación observada:** en la ventana inicial de las cinco señales incluidas, el modelo actual de Stage 1 predice actividad (aproximadamente 88–95 %), incluso para los ejemplos con etiquetas de reposo. La cascada las bloquea conforme a esa salida. Esto requiere revisar el modelo de Stage 1, el orden de clases documentado o la correspondencia del preprocesamiento con su entrenamiento; no se invierten etiquetas ni se ajustan umbrales para forzar resultados. Las pruebas controladas de la ruta de reposo no son evidencia de precisión del modelo real.
+**Stage 1 adaptado:** se conserva el original `stage1_resnet.onnx`. La variante incorpora un adaptador de adquisición aprendido con ECG de sensores y registros clínicos adquiridos en reposo según PhysioNet. No usa el nombre del botón ni la etiqueta de arritmia. La cascada real pasa los cuatro ejemplos clínicos a Stage 2 y bloquea Active. Ver `STAGE1_MODEL_CARD.md` y `stage1-evaluation.json` para el procedimiento, las métricas internas y sus límites. La inferencia usa ventanas continuas: el recorrido circular se limita a la gráfica.
 
 ## Despliegue en Vercel
 
