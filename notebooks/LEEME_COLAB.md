@@ -34,12 +34,12 @@ results_colab/ contiene CSV de limpieza, características, particiones, búsqued
 - Todas las métricas precision/recall/F1 se reportan macro en ambas etapas.
 - ResNet conserva la estructura residual y las pérdidas originales (FocalLoss ponderada en etapa 1, cross-entropy en etapa 2), con una implementación de arquitectura común. Son nuevos entrenamientos; no se cargan checkpoints originales. En etapa 2 se usa batch 128 para reducir memoria.
 - Se descartan señales Chapman no finitas, constantes o de longitud distinta de 5000 y se registran. Las particiones de esta versión se guardan y comparten entre todos los modelos.
-- No se reentrena ni se modifica la aplicación Vercel. Para desplegar, deben coincidir características, normalización, orden de clases y umbrales. Las salidas ONNX de ResNet son logits.
+- Para reutilizar el modelo exportado, deben coincidir características, normalización, orden de clases y umbrales. Las salidas ONNX de ResNet son logits.
 
 ## Estado de validación
 
 Los cuadernos se entregan sin salidas ejecutadas. No se ejecutaron en una cuenta de Colab ni se entrenaron modelos en esta sesión. No hay métricas simuladas. Revisar las comprobaciones de datos de 01 antes de entrenar. Si se vuelve a preparar datos, repetir los entrenamientos; se verifica la versión para evitar mezclar modelos viejos con datos nuevos.
 
-El preprocesamiento asume 500 Hz y el convenio de nombres por sujeto del script original. Confirmar ambos con el dataset. Las pruebas funcionales previas en Vercel no acreditan por sí solas independencia estadística de los datos.
+El preprocesamiento asume 500 Hz y el convenio de nombres por sujeto del script original. Confirmar ambos con el dataset.
 
 Referencias oficiales: [archivos en Colab](https://colab.research.google.com/notebooks/io.ipynb), [FAQ y recursos](https://research.google.com/colaboratory/faq.html).
