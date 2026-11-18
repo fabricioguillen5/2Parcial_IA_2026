@@ -1,0 +1,7 @@
+stage,metric,count
+1,invalid_values,0
+1,accepted_windows,1075
+1,rejected_windows,0
+1,trailing_samples,379319
+1,files_reported,150
+2,records_accepted,33712

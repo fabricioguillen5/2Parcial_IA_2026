@@ -1,0 +1,15 @@
+{
+  "dataset_id": "2e7db303-ac48-4930-856a-43b9765eaf2c",
+  "config": {
+    "classes": 2,
+    "width": 16,
+    "dropout": 0.5
+  },
+  "best_epoch": 7,
+  "best_val_loss": 0.10254474677559403,
+  "threshold": 0.5,
+  "classes": [
+    "Reposo",
+    "Actividad"
+  ]
+}

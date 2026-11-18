@@ -1,0 +1,18 @@
+{
+  "dataset_id": "95c3f035-ca53-4562-ad62-532529375851",
+  "config": {
+    "classes": 4,
+    "width": 32,
+    "dropout": 0.0
+  },
+  "best_epoch": 9,
+  "best_val_loss": 0.04649769932022792,
+  "budget_epochs": 10,
+  "threshold": 0.5,
+  "classes": [
+    "Bradicardia sinusal",
+    "Taquicardia sinusal",
+    "Fibrilación auricular",
+    "Ritmo sinusal normal"
+  ]
+}

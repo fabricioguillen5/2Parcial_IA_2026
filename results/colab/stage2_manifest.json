@@ -1,0 +1,27 @@
+{
+  "dataset_id": "95c3f035-ca53-4562-ad62-532529375851",
+  "samples": 33712,
+  "train": 26969,
+  "validation": 6743,
+  "features": [
+    "hr",
+    "sdnn",
+    "rmssd",
+    "pnn50",
+    "pnn20",
+    "rr_cv",
+    "sd1",
+    "sd2",
+    "sd1_sd2",
+    "skew",
+    "kurt"
+  ],
+  "classes": [
+    "Bradicardia sinusal",
+    "Taquicardia sinusal",
+    "Fibrilación auricular",
+    "Ritmo sinusal normal"
+  ],
+  "seed": 42,
+  "sampling_rate_assumed": 500
+}

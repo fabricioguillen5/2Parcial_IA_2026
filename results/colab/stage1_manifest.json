@@ -1,0 +1,26 @@
+{
+  "dataset_id": "2e7db303-ac48-4930-856a-43b9765eaf2c",
+  "samples": 1075,
+  "train": 859,
+  "validation": 216,
+  "features": [
+    "Kurtosis",
+    "ZCR",
+    "Crest_Factor",
+    "Skewness",
+    "HR",
+    "RMSSD",
+    "SDNN",
+    "EMG_Power",
+    "Baseline_Power",
+    "LF_HF_Ratio",
+    "Morph_Corr",
+    "Std_Dev"
+  ],
+  "classes": [
+    "Reposo",
+    "Actividad"
+  ],
+  "seed": 42,
+  "sampling_rate_assumed": 500
+}
