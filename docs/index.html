@@ -3,71 +3,187 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Pulso IA, proyecto de clasificación de señales ECG de Ingeniería Mecatrónica, FIUNA.">
-  <title>Pulso IA · FIUNA</title>
+  <meta name="description" content="Pulso IA: clasificación de actividad y ritmo en señales de ECG. Proyecto de Ingeniería Mecatrónica, FIUNA.">
+  <meta name="theme-color" content="#111822">
+  <title>Pulso IA · Clasificación de señales ECG</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="metricas.js" defer></script>
+  <script src="explorador.js" defer></script>
 </head>
 <body>
-  <header>
-    <p class="institution">Ingeniería Mecatrónica · FIUNA</p>
-    <h1>Pulso IA</h1>
-    <p class="intro">Clasificación de señales ECG en dos etapas</p>
-    <p>Hilario Ruiz y Fabricio Guillen</p>
-    <a class="button" href="https://github.com/fabricioguillen5/2Parcial_IA_2026/tree/entrega/pulso-ia">Ver la entrega en GitHub</a>
-  </header>
-  <main>
-    <section aria-labelledby="proyecto">
-      <h2 id="proyecto">El proyecto</h2>
-      <p>Estudiamos cómo distinguir reposo y actividad en señales de un sensor portátil y cómo clasificar cuatro ritmos en registros ECG de derivación I. Comparamos regresión logística, Random Forest con Grid Search y ResNet 1D.</p>
-      <p>Usamos <a href="https://github.com/fbme-ictm/ECG-interference">ECG-interference</a> para la primera etapa y <a href="https://physionet.org/content/ecg-arrhythmia/1.0.0/">la base de arritmias de PhysioNet, versión 1.0.0</a>, para la segunda.</p>
-      <figure>
-        <img src="comparacion-modelos.png" width="2602" height="952" alt="ResNet base obtuvo el mayor F1 macro en validación, con 87,32 % en la etapa 1 y 97,64 % en la etapa 2.">
-        <figcaption>F1 macro de validación por modelo y etapa. La evaluación de la cascada completa queda pendiente.</figcaption>
+  <a class="skip" href="#contenido">Saltar al contenido</a>
+  <header class="hero">
+    <nav class="nav wrap" aria-label="Navegación principal">
+      <a class="brand" href="#">Pulso<span>IA</span></a>
+      <div class="nav-links">
+        <a href="#metodo">Método</a>
+        <a href="#datos">Datos</a>
+        <a href="#resultados">Resultados</a>
+        <a href="#equipo">Equipo</a>
+      </div>
+    </nav>
+    <div class="hero-content wrap">
+      <div>
+        <p class="eyebrow">Ingeniería Mecatrónica · FIUNA</p>
+        <h1>Clasificación de señales <em>ECG</em></h1>
+        <p class="lead">Dos tareas sobre una misma señal: distinguir reposo de actividad y reconocer cuatro ritmos cardíacos.</p>
+        <div class="actions">
+          <a class="button primary" href="#resultados">Explorar resultados</a>
+          <a class="button outline" href="https://github.com/fabricioguillen5/2Parcial_IA_2026/tree/entrega/pulso-ia">Ver el repositorio ↗</a>
+        </div>
+        <p class="byline">Hilario Ruiz y Fabricio Guillen</p>
+      </div>
+      <figure class="monitor" aria-label="Ilustración de un monitor ECG">
+        <div class="monitor-top"><span><i></i> ECG</span><span>Señal ilustrativa</span></div>
+        <div class="trace-grid" aria-hidden="true">
+          <div class="trace"></div><div class="trace second"></div>
+        </div>
+        <figcaption class="monitor-caption"><span><i class="stage-dot one"></i> Reposo / actividad</span><span><i class="stage-dot two"></i> Cuatro ritmos</span></figcaption>
       </figure>
-      <nav aria-label="Materiales del proyecto">
-        <a href="https://github.com/fabricioguillen5/2Parcial_IA_2026/tree/entrega/pulso-ia/notebooks">Cuadernos de Colab</a>
-        <a href="https://github.com/fabricioguillen5/2Parcial_IA_2026/tree/entrega/pulso-ia/results">Resultados y Grid Search</a>
-        <a href="https://github.com/fabricioguillen5/2Parcial_IA_2026/tree/entrega/pulso-ia/presentacion">Presentación y ayudamemoria</a>
-      </nav>
+    </div>
+    <div class="stats wrap" aria-label="Modelos seleccionados">
+      <div><strong>87,32 <small>%</small></strong><span>F1 macro de validación · Etapa 1</span></div>
+      <div><strong>97,64 <small>%</small></strong><span>F1 macro de validación · Etapa 2</span></div>
+      <div><strong class="model-name">ResNet 1D</strong><span>Modelo base seleccionado en ambas etapas</span></div>
+    </div>
+  </header>
+  <main id="contenido">
+    <section class="section wrap" id="metodo" aria-labelledby="titulo-metodo">
+      <div class="section-head">
+        <p class="eyebrow">Cómo funciona</p>
+        <h2 id="titulo-metodo">Del ECG a la predicción</h2>
+        <p>El prototipo usa la estimación de actividad para decidir cuándo analizar el ritmo. Cada etapa se evaluó con su propia fuente de datos.</p>
+      </div>
+      <ol class="flow">
+        <li><span>01</span><h3>Preparar la ventana</h3><p>Limpiamos las muestras, separamos los datos y normalizamos cada ventana para la ResNet.</p></li>
+        <li><span>02</span><h3>Estimar actividad</h3><p>El primer modelo recibe 4 000 muestras y predice reposo o actividad.</p></li>
+        <li><span>03</span><h3>Identificar el ritmo</h3><p>En el esquema de cascada, el resultado de reposo habilita la clasificación de cuatro ritmos.</p></li>
+      </ol>
+      <p class="method-note">Comparamos regresión logística y Random Forest, que usan características como la frecuencia cardíaca y los cruces por cero, con ResNet 1D, que aprende de la señal normalizada. Aplicamos Grid Search a los dos modelos clásicos.</p>
     </section>
-    <section aria-labelledby="equipo">
-      <h2 id="equipo">Equipo y formación</h2>
-      <p>Cursamos el 9.º semestre de Ingeniería Mecatrónica en la Facultad de Ingeniería de la Universidad Nacional de Asunción (FIUNA). En Pulso IA aplicamos procesamiento de señales, aprendizaje supervisado y evaluación de modelos.</p>
+    <section class="section data-band" id="datos" aria-labelledby="titulo-datos">
+      <div class="wrap">
+        <div class="section-head">
+          <p class="eyebrow">Datos del experimento</p>
+          <h2 id="titulo-datos">Dos fuentes de señales</h2>
+          <p>Los totales corresponden a los datos preparados y reúnen entrenamiento y validación.</p>
+        </div>
+        <div class="datasets">
+          <article class="dataset">
+            <p class="stage"><i class="stage-dot one"></i> Etapa 1 · Reposo o actividad</p>
+            <h3>ECG-interference</h3>
+            <p>Señales de ECG tomadas con sensor portátil. Cada ventana contiene 4 000 muestras. La partición se hizo por sujeto.</p>
+            <p class="dataset-count"><strong>1 075</strong> ventanas</p>
+            <p class="split">859 entrenamiento · 216 validación</p>
+            <dl class="distribution">
+              <div><dt>Reposo</dt><dd>214 <span>19,9 %</span></dd></div>
+              <div><dt>Actividad</dt><dd>861 <span>80,1 %</span></dd></div>
+            </dl>
+            <a href="https://github.com/fbme-ictm/ECG-interference">Ver dataset original ↗</a>
+          </article>
+          <article class="dataset clinical">
+            <p class="stage"><i class="stage-dot two"></i> Etapa 2 · Cuatro ritmos</p>
+            <h3>Chapman / PhysioNet</h3>
+            <p>ECG clínicos de 12 derivaciones. Usamos la derivación I con 5 000 muestras a 500 Hz. La partición fue por clase y orden de ID.</p>
+            <p class="dataset-count"><strong>33 712</strong> registros</p>
+            <p class="split">26 969 entrenamiento · 6 743 validación</p>
+            <dl class="distribution">
+              <div><dt>Bradicardia sinusal</dt><dd>16 559 <span>49,1 %</span></dd></div>
+              <div><dt>Taquicardia sinusal</dt><dd>7 254 <span>21,5 %</span></dd></div>
+              <div><dt>Fibrilación auricular</dt><dd>1 780 <span>5,3 %</span></dd></div>
+              <div><dt>Ritmo sinusal normal</dt><dd>8 119 <span>24,1 %</span></dd></div>
+            </dl>
+            <a href="https://physionet.org/content/ecg-arrhythmia/1.0.0/">Ver dataset original ↗</a>
+          </article>
+        </div>
+        <p class="method-note">Para tratar el desbalance, aplicamos pesos de clase en regresión logística y Random Forest. En la ResNet de la etapa 1 usamos Focal Loss ponderada. Para comparar modelos, el F1 macro da el mismo peso a cada clase.</p>
+      </div>
+    </section>
+    <section class="section wrap" id="resultados" aria-labelledby="titulo-resultados">
+      <div class="section-head">
+        <p class="eyebrow">Resultados de Colab</p>
+        <h2 id="titulo-resultados">Comparación de modelos</h2>
+        <p>Explorá las seis variantes por etapa. La selección se hizo por F1 macro de validación.</p>
+      </div>
+      <figure id="grafico-estatico" class="fallback-figure">
+        <img src="comparacion-modelos.png" width="2602" height="952" loading="lazy" alt="Comparación de F1 macro. La ResNet base obtuvo 87,32 % en la etapa 1 y 97,64 % en la etapa 2.">
+        <figcaption>Comparación de F1 macro sobre la partición de validación de cada etapa.</figcaption>
+      </figure>
+      <div id="explorador" class="explorador" hidden>
+        <div class="chart-controls">
+          <div class="stage-picker" role="group" aria-label="Etapa del proyecto">
+            <button type="button" data-stage="1" aria-pressed="true">Etapa 1</button>
+            <button type="button" data-stage="2" aria-pressed="false">Etapa 2</button>
+          </div>
+          <div class="metric-picker">
+            <label for="metrica">Métrica</label>
+            <select id="metrica">
+              <option value="f1_macro">F1 macro</option>
+              <option value="accuracy">Accuracy</option>
+              <option value="precision_macro">Precisión macro</option>
+              <option value="recall_macro">Recall macro</option>
+              <option value="auc">AUC ROC</option>
+            </select>
+          </div>
+        </div>
+        <p id="grafico-resumen" class="chart-summary" aria-live="polite"></p>
+        <div class="axis" aria-hidden="true"><span>0 %</span><span>25 %</span><span>50 %</span><span>75 %</span><span>100 %</span></div>
+        <ul class="bars" id="barras" aria-label="Métricas por modelo"></ul>
+        <p id="metrica-explicacion" class="metric-description"></p>
+        <details>
+          <summary>Ver tabla completa de la etapa</summary>
+          <div class="table-scroll">
+            <table>
+              <caption id="caption-tabla"></caption>
+              <thead><tr><th scope="col">Modelo</th><th scope="col">F1 macro</th><th scope="col">Accuracy</th><th scope="col">Precisión</th><th scope="col">Recall</th><th scope="col">AUC ROC</th></tr></thead>
+              <tbody id="tabla-metricas"></tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+      <div class="evidence">
+        <figure>
+          <img src="matrices-resnet.png" loading="lazy" alt="Matrices de confusión de ResNet base para las etapas 1 y 2, normalizadas por clase real.">
+          <figcaption><strong>Errores por clase.</strong> La ResNet base reconoció 33 de 43 ventanas de reposo y 327 de 356 casos de fibrilación auricular.</figcaption>
+        </figure>
+        <aside class="limits">
+          <h3>Alcance de los resultados</h3>
+          <p>Estas métricas corresponden a la validación de cada etapa. Falta una prueba final independiente y una evaluación de la cascada con un mismo conjunto de señales que tenga etiquetas de actividad y ritmo.</p>
+          <a href="https://github.com/fabricioguillen5/2Parcial_IA_2026/tree/entrega/pulso-ia/results/colab">Ver métricas y tablas de Grid Search ↗</a>
+        </aside>
+      </div>
+    </section>
+    <section class="section resources-band" aria-labelledby="titulo-materiales">
+      <div class="wrap">
+        <h2 id="titulo-materiales">Materiales del proyecto</h2>
+        <div class="resource-links">
+          <a href="https://github.com/fabricioguillen5/2Parcial_IA_2026/tree/entrega/pulso-ia/notebooks">Cuadernos de Colab <span>↗</span></a>
+          <a href="https://github.com/fabricioguillen5/2Parcial_IA_2026/tree/entrega/pulso-ia/data">Fuentes y preparación <span>↗</span></a>
+          <a href="https://github.com/fabricioguillen5/2Parcial_IA_2026/tree/entrega/pulso-ia/presentacion">Presentación y ayudamemoria <span>↗</span></a>
+        </div>
+      </div>
+    </section>
+    <section class="section wrap" id="equipo" aria-labelledby="titulo-equipo">
+      <div class="section-head">
+        <p class="eyebrow">Equipo</p>
+        <h2 id="titulo-equipo">Hilario y Fabricio</h2>
+        <p>Estudiantes del 9.º semestre de Ingeniería Mecatrónica en la Facultad de Ingeniería de la Universidad Nacional de Asunción.</p>
+      </div>
       <div class="team">
         <article class="profile">
-          <span class="monogram" aria-hidden="true">HR</span>
-          <div>
-            <h3>Hilario Ruiz</h3>
-            <p>Estudiante de Ingeniería Mecatrónica</p>
-            <ul>
-              <li>Formación en inglés avanzado 2 en el CCPA.</li>
-              <li>Experiencia en reparación de equipos electrónicos automotrices.</li>
-            </ul>
-          </div>
+          <div class="monogram" aria-hidden="true">HR</div>
+          <div><h3>Hilario Ruiz</h3><p>Formación en inglés avanzado 2 en el CCPA. Experiencia en reparación de equipos electrónicos automotrices.</p>
+            <a href="mailto:hyudiz@fiuna.edu.py">hyudiz@fiuna.edu.py</a></div>
         </article>
         <article class="profile">
-          <span class="monogram" aria-hidden="true">FG</span>
-          <div>
-            <h3>Fabricio Guillen</h3>
-            <p>Estudiante de Ingeniería Mecatrónica</p>
-            <ul>
-              <li>Encargado de la subdivisión de Mecánica del Club de Robótica.</li>
-              <li>Miembro de la división de recuperación del Club de Cohetes (CCTE).</li>
-              <li>Responsable del desarrollo del sistema de despliegue de antena de SAPUCAI, un proyecto CubeSat 2U de la FIUNA.</li>
-            </ul>
-          </div>
+          <div class="monogram" aria-hidden="true">FG</div>
+          <div><h3>Fabricio Guillen</h3><p>Encargado de la subdivisión de Mecánica del Club de Robótica. Miembro de la división de recuperación del CCTE. Responsable del sistema de despliegue de antena del CubeSat 2U SAPUCAI.</p>
+            <a href="mailto:fguillen@fiuna.edu.py">fguillen@fiuna.edu.py</a> · <a href="https://github.com/fabricioguillen5">GitHub</a></div>
         </article>
       </div>
-      <h3>Herramientas del proyecto</h3>
-      <p>Python, Google Colab, pandas, SciPy, scikit-learn, PyTorch, ONNX y Git.</p>
+      <p class="method-note">Herramientas: Python, Google Colab, pandas, SciPy, scikit-learn, PyTorch, ONNX y Git.</p>
     </section>
   </main>
-  <footer>
-    <h2>Contacto</h2>
-    <ul class="contacts">
-      <li>Hilario Ruiz · <a href="mailto:hyudiz@fiuna.edu.py">hyudiz@fiuna.edu.py</a></li>
-      <li>Fabricio Guillen · <a href="mailto:fguillen@fiuna.edu.py">fguillen@fiuna.edu.py</a> · <a href="https://github.com/fabricioguillen5">GitHub de Fabricio</a></li>
-    </ul>
-  </footer>
+  <footer><div class="wrap footer-content"><a class="brand" href="#">Pulso<span>IA</span></a><p>Proyecto académico · FIUNA</p><a href="#contenido">Volver al contenido ↑</a></div></footer>
 </body>
 </html>
