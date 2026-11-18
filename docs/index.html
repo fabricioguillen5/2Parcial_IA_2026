@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Pulso IA, proyecto de clasificación de señales ECG de Ingeniería Mecatrónica, FIUNA.">
+  <title>Pulso IA · FIUNA</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <p class="institution">Ingeniería Mecatrónica · FIUNA</p>
+    <h1>Pulso IA</h1>
+    <p class="intro">Clasificación de señales ECG en dos etapas</p>
+    <p>Hilario Ruiz y Fabricio Guillen</p>
+    <a class="button" href="https://github.com/fabricioguillen5/2Parcial_IA_2026">Ver el repositorio</a>
+  </header>
+  <main>
+    <section aria-labelledby="proyecto">
+      <h2 id="proyecto">El proyecto</h2>
+      <p>Estudiamos cómo distinguir reposo y actividad en señales de un sensor portátil y cómo clasificar cuatro ritmos en registros ECG de derivación I. Comparamos regresión logística, Random Forest con Grid Search y ResNet 1D.</p>
+      <p>Usamos <a href="https://github.com/fbme-ictm/ECG-interference">ECG-interference</a> para la primera etapa y <a href="https://physionet.org/content/ecg-arrhythmia/1.0.0/">la base de arritmias de PhysioNet, versión 1.0.0</a>, para la segunda.</p>
+      <figure>
+        <img src="comparacion-modelos.png" width="2602" height="952" alt="ResNet base obtuvo el mayor F1 macro en validación, con 87,32 % en la etapa 1 y 97,64 % en la etapa 2.">
+        <figcaption>F1 macro de validación por modelo y etapa. La evaluación de la cascada completa queda pendiente.</figcaption>
+      </figure>
+    </section>
+    <section aria-labelledby="equipo">
+      <h2 id="equipo">Equipo y formación</h2>
+      <p>Hilario Ruiz y Fabricio Guillen estudiamos Ingeniería Mecatrónica en la Facultad de Ingeniería de la Universidad Nacional de Asunción. En este TP aplicamos procesamiento de señales, aprendizaje supervisado y evaluación de modelos.</p>
+      <h3>Herramientas del proyecto</h3>
+      <p>Python, Google Colab, pandas, SciPy, scikit-learn, PyTorch, ONNX y Git.</p>
+    </section>
+  </main>
+  <footer>
+    <h2>Contacto</h2>
+    <p><a href="https://github.com/fabricioguillen5">Fabricio Guillen en GitHub</a></p>
+  </footer>
+</body>
+</html>

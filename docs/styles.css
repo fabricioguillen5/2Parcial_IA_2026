@@ -1,0 +1,32 @@
+:root {
+  font-family: Inter, system-ui, sans-serif;
+  color: #172c39;
+  background: #f8fbfa;
+  line-height: 1.55;
+}
+body { margin: 0; }
+header {
+  padding: clamp(2rem, 7vw, 6rem) max(1.25rem, calc((100% - 60rem) / 2));
+  color: #f8fbfa;
+  background: #12413f;
+}
+h1 { margin: .2em 0 0; font-size: clamp(3rem, 9vw, 6rem); line-height: 1; }
+h2 { line-height: 1.2; }
+.institution { color: #b9e6df; }
+.intro { font-size: clamp(1.2rem, 3vw, 1.65rem); }
+.button {
+  display: inline-block;
+  margin-top: .5rem;
+  padding: .6rem 1rem;
+  color: #123431;
+  background: #fbd279;
+  border-radius: .35rem;
+  font-weight: 700;
+}
+main, footer { max-width: 60rem; margin: auto; padding: 1rem 1.25rem; }
+section { margin-block: 2rem; }
+a { color: #00615b; text-underline-offset: .14em; }
+figure { margin: 1.5rem 0; }
+img { display: block; width: 100%; height: auto; border: 1px solid #dbe7e4; }
+figcaption { margin-top: .6rem; color: #435a62; }
+footer { border-top: 1px solid #dbe7e4; }

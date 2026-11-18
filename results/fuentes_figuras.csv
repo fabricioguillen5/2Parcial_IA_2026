@@ -1,0 +1,13 @@
+stage,model,source
+1,RL base,/content/drive/MyDrive/Colab Notebooks/Dataseet_TP_IA/results_colab/stage1_baseline_predictions.csv
+1,RF base,/content/drive/MyDrive/Colab Notebooks/Dataseet_TP_IA/results_colab/stage1_baseline_rf_predictions.csv
+1,ResNet base,/content/drive/MyDrive/Colab Notebooks/Dataseet_TP_IA/results_colab/stage1_baseline_resnet_predictions.csv
+1,RF GS,/content/drive/MyDrive/Colab Notebooks/Dataseet_TP_IA/results_colab/stage1_rf_predictions.csv
+1,RL GS,/content/drive/MyDrive/Colab Notebooks/Dataseet_TP_IA/results_colab/stage1_lr_predictions.csv
+1,ResNet 03,/content/drive/MyDrive/Colab Notebooks/Dataseet_TP_IA/results_colab/stage1_resnet_predictions.csv
+2,RL base,/content/drive/MyDrive/Colab Notebooks/Dataseet_TP_IA/results_colab/stage2_baseline_predictions.csv
+2,RF base,/content/drive/MyDrive/Colab Notebooks/Dataseet_TP_IA/results_colab/stage2_baseline_rf_predictions.csv
+2,ResNet base,/content/drive/MyDrive/Colab Notebooks/Dataseet_TP_IA/results_colab/stage2_baseline_resnet_predictions.csv
+2,RF GS,/content/drive/MyDrive/Colab Notebooks/Dataseet_TP_IA/results_colab/stage2_rf_predictions.csv
+2,RL GS,/content/drive/MyDrive/Colab Notebooks/Dataseet_TP_IA/results_colab/stage2_lr_predictions.csv
+2,ResNet 03,/content/drive/MyDrive/Colab Notebooks/Dataseet_TP_IA/results_colab/stage2_resnet_predictions.csv

@@ -1,0 +1,78 @@
+Lista de entregables del proyecto
+1. Repositorio del Proyecto
+Estructura sugerida del repositorio (la estructura puede variar dependiendo del problema)
+Organiza el repositorio con carpetas específicas para cada componente:
+
+data/: Datos en bruto y archivos de entrada.
+notebooks/: Notebooks de preprocesamiento, entrenamiento, optimizacion y visualización.
+results/: Resultados como tablas CSV de optimización de hiperparámetros con las métricas, etc.
+README.md: Documentación básica del proyecto.
+Paso a paso:
+Preprocesamiento de datos:
+
+Realiza la limpieza inicial y convierte los datos en bruto en un formato utilizable.
+Genera al menos tres características de entrada adicionales a partir de los datos crudos. Explica brevemente el proceso de generación de cada feature.
+Entrenamiento:
+
+Implementa un modelo base (puede ser un modelo sencillo, como regresión logística, árbol de decisión, redes neuronales,  etc., dependiendo de la naturaleza de los datos).
+Ajusta el modelo con el conjunto de datos y realiza una evaluación preliminar.
+Optimización de Hiperparámetros:
+
+Utiliza Grid Search o Optuna para realizar una búsqueda de los hiperparámetros óptimos.
+Guarda los resultados en un archivo CSV para facilitar la comparación y generación de tablas.
+Define métricas clave para evaluar el desempeño, como la precisión, el RMSE, la F1-Score, etc.
+Visualización de Resultados:
+
+Crea un notebook de visualización para generar las predicciones.
+Incluye gráficos para evaluar la convergencia (curvas de entrenamiento).
+Representa histogramas de errores y, si es un problema de clasificación, una matriz de confusión para ver la efectividad del modelo.
+2. Página de Inicio en GitHub Pages
+Configura una página de GitHub Pages con tu cv y datos del proyecto(
+
+Reproducir Vídeo
+).
+Instrucciones:
+Estructura de la Página:
+
+Página de Inicio (Home):
+
+Tu nombre y título profesional: Por ejemplo, "Benjamin - Estudiante Ingenieria Electromecanica".
+Breve Introducción: Un párrafo corto describiendo tus habilidades e intereses y tus áreas de especialización.
+Foto: Una foto profesional o un gráfico que te represente.
+Sección de Habilidades:
+
+Haz una lista de habilidades relevantes en IA, programación, y herramientas.
+Ejemplo: “Python, Machine Learning, Data Analysis, Git, Pandas, Scikit-Learn, Optuna, Grid Search, etc.”
+Sección de Educación:
+
+Menciona tu formación académica con los títulos obtenidos, instituciones y años.
+Sección del Proyecto de Inteligencia Artificial:
+
+Título del Proyecto: Nombre breve y descriptivo.
+Descripción: Explica en 2-3 oraciones el objetivo del proyecto y su relevancia.
+Características Clave:
+Dataset: Fuente y tipo de datos utilizados.
+Modelo: Resumen del modelo utilizado y optimización de hiperparámetros.
+Visualización: Incluye alguna gráfica de resultados o un enlace directo al repositorio para detalles adicionales.
+Enlace al repositorio: Agrega un enlace directo al repositorio en GitHub para que los interesados puedan ver el proyecto completo.
+Sección de Contacto:
+
+Enlaces a tus perfiles de LinkedIn, GitHub, y correo electrónico para facilitar la conexión
+.
+Pasos de Configuración:
+
+Sube un archivo index.html o README.md en el repositorio y habilita GitHub Pages desde la configuración del proyecto.
+Puedes utilizar Jekyll o una plantilla simple en Markdown para crear una presentación limpia y efectiva.
+3. Presentación en Diapositivas (10 diapositivas)
+Crea una presentación en PowerPoint, Canva o Google Slides con un enfoque visual, manteniendo el texto al mínimo. Aquí tienes un esquema sugerido:
+
+Diapositiva 1: Título del proyecto, tu nombre y una imagen representativa.
+Diapositiva 2: Planteamiento del problema (breve explicación de la relevancia del tema).
+Diapositiva 3: Descripción del dataset (fuente, características relevantes).
+Diapositiva 4: Features creados (ilustraciones o ejemplos).
+Diapositiva 5: Modelo utilizado (nombre, breve descripción).
+Diapositiva 6: Optimización de Hiperparámetros (menciona Grid Search u Optuna).
+Diapositiva 7: Visualización de resultados (gráficos de convergencia).
+Diapositiva 8: Predicciones del modelo (ejemplos y evaluación de precisión).
+Diapositiva 9: Conclusiones y limitaciones.
+Diapositiva 10: Trabajos futuros y posible impacto.

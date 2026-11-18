@@ -1,0 +1,5 @@
+stage,model,cv_f1_macro,best_params
+1,rf,0.8046146613372702,"{""rf__max_depth"": 4, ""rf__max_features"": ""sqrt"", ""rf__min_samples_leaf"": 20, ""rf__n_estimators"": 50}"
+1,lr,0.8099498553619112,"{""lr__C"": 0.1, ""lr__solver"": ""lbfgs""}"
+2,rf,0.834977943433354,"{""rf__max_depth"": 5, ""rf__max_features"": 0.5, ""rf__min_samples_leaf"": 8, ""rf__n_estimators"": 50}"
+2,lr,0.7844458908273046,"{""lr__C"": 1.0, ""lr__solver"": ""lbfgs""}"
