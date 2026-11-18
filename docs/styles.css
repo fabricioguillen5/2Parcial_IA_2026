@@ -30,9 +30,16 @@ figure { margin: 1.5rem 0; }
 img { display: block; width: 100%; height: auto; border: 1px solid #dbe7e4; }
 figcaption { margin-top: .6rem; color: #435a62; }
 nav { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin-block: 1.5rem; }
-.team { display: flex; flex-wrap: wrap; gap: 1.25rem 3rem; margin-block: 1.75rem; }
-.profile { display: flex; align-items: center; gap: .9rem; }
+.team {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 25rem), 1fr));
+  gap: 1.25rem 2.5rem;
+  margin-block: 1.75rem;
+}
+.profile { display: flex; align-items: flex-start; gap: .9rem; }
 .profile h3, .profile p { margin: 0; }
+.profile ul { margin: .6rem 0 0; padding-inline-start: 1.2rem; }
+.profile li + li, .contacts li + li { margin-block-start: .35rem; }
 .monogram {
   display: grid;
   place-items: center;
@@ -45,3 +52,4 @@ nav { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; margin-block: 1.5rem; }
   font-weight: 700;
 }
 footer { border-top: 1px solid #dbe7e4; }
+.contacts { padding: 0; list-style: none; }
