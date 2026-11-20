@@ -27,3 +27,4 @@ Los resultados corresponden a la evaluación por etapa en Colab. Queda pendiente
 - [Cuadernos y pasos de ejecución](notebooks/LEEME_COLAB.md)
 - [Resultados y figuras](results/README.md)
 - [Página pública de Pulso IA](https://fabricioguillen5.github.io/2Parcial_IA_2026/)
+- [CV del equipo](https://fabricioguillen5.github.io/2Parcial_IA_2026/cv/)
