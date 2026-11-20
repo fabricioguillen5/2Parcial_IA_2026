@@ -1,6 +1,6 @@
 # Pulso IA
 
-Trabajo práctico de Inteligencia Artificial de Hilario Ruiz y Fabricio Guillen, estudiantes de Ingeniería Mecatrónica de la Facultad de Ingeniería de la Universidad Nacional de Asunción.
+Trabajo práctico de Inteligencia Artificial de Hilario Yudiz y Fabricio Guillen, estudiantes de Ingeniería Mecatrónica de la Facultad de Ingeniería de la Universidad Nacional de Asunción.
 
 El proyecto estudia dos tareas sobre señales ECG. La primera distingue reposo y actividad en ventanas de 4000 muestras. La segunda utiliza la derivación I de registros de 5000 muestras para clasificar bradicardia sinusal, taquicardia sinusal, fibrilación auricular y ritmo sinusal normal.
 
